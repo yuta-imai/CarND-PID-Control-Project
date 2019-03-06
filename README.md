@@ -3,6 +3,22 @@ Self-Driving Car Engineer Nanodegree Program
 
 ---
 
+## Work summary
+
+I started by adding method `NextSteeringValue()` in PID.cpp, which provides steering value by PID control.
+
+Then I add Twiddling capability by adding `InitTwiddle()` and `Twiddle()` in `PID.cpp`.
+
+While tries errors I added 
+
+- Guard for sudden direction change in `NextSteeringValue()` in `PID.cpp`
+- Initial PDI values as 0.139, 3.2, 0.00131 in `main.cpp`
+
+[Video link](https://youtu.be/B9HxQL_GzrA)
+
+
+---
+
 ## Dependencies
 
 * cmake >= 3.5
