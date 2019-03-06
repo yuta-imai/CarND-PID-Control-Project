@@ -23,7 +23,6 @@ public:
   */
   bool twiddeling;
   unsigned long long step_counter;
-  unsigned long long ignore_initial_steps;
   unsigned long long twiddle_interval;
   double twiddle_tolerance;
   double cte_sum;
