@@ -1,156 +1,161 @@
+#define _USE_MATH_DEFINES
 #include "PID.h"
 #include <math.h> 
 #include <iostream>
 
-/**
- * TODO: Complete the PID class. You may add any additional desired functions.
- */
+using namespace std;
+
+/*
+* TODO: Complete the PID class.
+*/
 
 PID::PID() {}
 
 PID::~PID() {}
 
-void PID::Init(double Kp_, double Ki_, double Kd_) {
-  /**
-   * TODO: Initialize PID coefficients (and errors, if needed)
-   */
-
-  Kp = Kp_;
-  Ki = Ki_;
-  Kd = Kd_;
-
-  p_error = 0.0;
-  i_error = 0.0;
-  d_error = 0.0;
-  cte_sum = 0.0;
-
-  counter = 0;
-  tw_best_avg_cte = -1.0;
-
+void PID::Init(double Kp, double Kd, double Ki) {
+	this->Kp = Kp;
+	this->Ki = Ki;
+	this->Kd = Kd;
+	d_error = 0.0;
+	p_error = 0.0;
+	i_error = 0.0;
+	cte_sum = 0.0;
+	step_counter = 0;
+	tw_best_avg_cte = -1.0; // i.e., undefined
 }
 
-double PID::NextSteerValue(double cte) {
+void PID::InitTwiddle(double twiddle_p, double twiddle_d, double twiddle_i, double twiddle_tolerance, unsigned long long twiddle_interval) {
 
-  double steer_value = - Kp * p_error
-                       - Kd * d_error
-                       - Ki * i_error;
-
-  if(steer_value > 0.3) {
-    steer_value = 0.3;
-  } else if (steer_value < -0.3) {
-    steer_value = -0.3;
-  }
-
-  std::cout << "Total Error: " << TotalError() << std::endl;
-  std::cout << "Step Counter: " << counter << std::endl;
-  std::cout << "P: " << Kp << ", I: " << Ki << ", D: " << Kd << std::endl;
-  return steer_value;
+	this->twiddle_tolerance = twiddle_tolerance;
+	this->twiddle_interval = twiddle_interval;
+	tw_param_diffs[0] = twiddle_p;
+	tw_param_diffs[1] = twiddle_d;
+	tw_param_diffs[2] = twiddle_i;
+	tw_best_avg_cte = -1;
 }
 
 void PID::UpdateError(double cte) {
-  /**
-   * TODO: Update PID errors based on cte.
-   */
-  d_error = cte - p_error;
-  p_error = cte;
-  i_error += cte;
-
-  cte_sum += pow(cte,2);
-  counter++;
-
+	d_error = cte - p_error;
+	p_error = cte;
+	i_error += cte;
+	cte_sum += pow(cte, 2);
+	step_counter++;
 }
 
 double PID::TotalError() {
-  /**
-   * TODO: Calculate and return the total error
-   */
-  return cte_sum/counter;  // TODO: Add your total error calc here!
-}
-
-void PID::InitTwiddle(double twiddle_p, double twiddle_i, double twiddle_d,  double twiddle_tolerance, unsigned long long twiddle_after) {
-
-  twiddeling = true;
-  this->twiddle_tolerance = twiddle_tolerance;
-  this->twiddle_after = twiddle_after;
-  tw_param_diffs[0] = twiddle_p;
-  tw_param_diffs[1] = twiddle_d;
-  tw_param_diffs[2] = twiddle_i;
-  tw_best_avg_cte = -1;
-
+	return cte_sum / step_counter;
 }
 
 void PID::ResetTotalError() {
-	counter = 0;
+	step_counter = 0;
 	cte_sum = 0;
 }
 
+double PID::NextSteeringValue() {
+	double steering_value =  - Kp * p_error 
+							- Kd * d_error
+							- Ki * i_error;
+
+	if (steering_value < -0.6) {
+		steering_value = -0.6;
+	}
+	else if (steering_value > 0.6) {
+		steering_value = 0.6;
+	}
+
+	std::cout << "Total Error: " << TotalError() << std::endl;
+	std::cout << "P: " << Kp << ", I: " << Ki << ", D: " << Kd << std::endl;
+
+	return steering_value;
+}
+
 void PID::Twiddle() {
-  if(twiddeling && (counter > twiddle_after)) {
-    double current_avg_cte = TotalError();
-    bool go_to_next = false;
 
-    if(tw_best_avg_cte < 0) {
-      tw_best_avg_cte = current_avg_cte;
-      tw_curr_direction = 0;
-      tw_curr_param = 0;
+	if (step_counter > twiddle_interval) {
 
-      while(tw_param_diffs[tw_curr_param] == 0) {
-        tw_curr_param = (tw_curr_param + 1) % 3;
-      }
-    }
+		double curr_avg_cte = TotalError();
+		bool go_to_next = false;
 
-    double sum_diff = tw_param_diffs[0] + tw_param_diffs[1] + tw_param_diffs[2] ;
-    std::cout << "Tolerance: " << sum_diff << std::endl;
-    if(sum_diff > twiddle_tolerance) {
-      double increment_param = 0.0;
+		// The code block for initial twiddling
+		if (tw_best_avg_cte < 0) {
+			tw_best_avg_cte = curr_avg_cte;
+			tw_curr_direction = 0;
+			coefficient = 0;
 
-      switch(tw_curr_direction) {
-        case 0:
-          increment_param= tw_param_diffs[tw_curr_param];
-          tw_curr_direction = 1;
-          break;
-        case 1:
-          if(current_avg_cte < tw_best_avg_cte) {
-            tw_best_avg_cte = current_avg_cte;
-            tw_param_diffs[tw_curr_param] *= 1.1;
-            go_to_next = true;
-          } else {
-            increment_param = -2 * tw_param_diffs[tw_curr_param];
-            tw_curr_direction = -1;
-          }
-          break;
-        case -1:
-          if(current_avg_cte < tw_best_avg_cte) {
-            tw_best_avg_cte = current_avg_cte;
-            tw_param_diffs[tw_curr_param] *= 1.1;
-          } else {
-            increment_param = tw_param_diffs[tw_curr_param];
-  					tw_param_diffs[tw_curr_param] *= 0.9;
-          }
-          go_to_next = true;
-          break;
-      }
+			// Let's pick up one out of [dp di, dd]
+			while (tw_param_diffs[coefficient] == 0) {
+				coefficient = (coefficient + 1) % 3;
+			} 
+		}
 
-      switch (tw_curr_param) 
-      {
-        case 0:
-          Kp += increment_param;
-          break;
-        case 1:
-          Kd += increment_param;
-        case 2:
-          Ki += increment_param;
-      }
+		double diff_sum = tw_param_diffs[0] + tw_param_diffs[1] + tw_param_diffs[2];
+		std::cout << "Diff sum: " << diff_sum << std::endl;
 
-      if(go_to_next) {
-        tw_curr_direction = 0;
-        do {
-          tw_curr_param = (tw_curr_param +1) %3;
-        } while (tw_param_diffs[tw_curr_param] == 0);
-      }
-      ResetTotalError();
-    }
-  } else {
-    std::cout << "Twiddling is OFF" << std::endl;;
-  }
+		if (diff_sum > twiddle_tolerance) {
+
+			std::cout << "Twiddling!" << std::endl;
+			double increment_param = 0.0;
+			switch (tw_curr_direction) {
+			
+			//Case for initial twiddling
+			case 0:
+				increment_param = tw_param_diffs[coefficient];
+				tw_curr_direction = 1;
+				break;
+
+			//Case for positive direction adjustment
+			case 1:
+				//If it works well, let's put reward
+				if (curr_avg_cte < tw_best_avg_cte) {
+					tw_best_avg_cte = curr_avg_cte;
+					tw_param_diffs[coefficient] *= 1.1;
+					go_to_next = true;
+				}
+				//If it does not work, let's flip adjustment direction.
+				else {
+					increment_param = -2 * tw_param_diffs[coefficient];
+					tw_curr_direction = -1;
+				}
+				break;
+			//Case for negative direction adjustment
+			case -1:
+				//If it works well, let's put reward
+				if (curr_avg_cte < tw_best_avg_cte) {
+					tw_best_avg_cte = curr_avg_cte;
+					tw_param_diffs[coefficient] *= 1.1;
+				}
+				//If not, we might be able to think that this parameter should not be changed. 
+				//So let's put penalty on this. 
+				else {
+					increment_param = tw_param_diffs[coefficient];
+					tw_param_diffs[coefficient] *= 0.9;
+				}
+				go_to_next = true;
+			}
+
+			//Now let changes make effect.
+			switch (coefficient) {
+			case 0:
+				Kp += increment_param;
+				break;
+			case 1:
+				Kd += increment_param;
+				break;
+			case 2:
+				Ki += increment_param;
+				break;
+			}
+			if (go_to_next) {
+				tw_curr_direction = 0;
+				do {
+					coefficient = (coefficient + 1) % 3;
+				} while (tw_param_diffs[coefficient] == 0);
+			}
+
+			//Let's clear current iteration's total erros and counters.
+			//This is something like a mini batches!
+			ResetTotalError();
+		}
+	}
 }

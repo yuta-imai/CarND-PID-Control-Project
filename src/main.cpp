@@ -37,8 +37,8 @@ int main() {
   /**
    * TODO: Initialize the pid variable.
    */
-  pid.Init(0.15, 0.0, 2.5);
-  pid.InitTwiddle(0.01, 0.01, 0.01, 0.0000001, 200);
+  pid.Init(0.139, 3.2, 0.00131);
+  pid.InitTwiddle(0.01, 0.1, 0.0001, 3.0e-08, 50);
 
   h.onMessage([&pid](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, 
                      uWS::OpCode opCode) {
@@ -67,7 +67,7 @@ int main() {
            */
 
           pid.UpdateError(cte);
-          steer_value = pid.NextSteerValue(cte);
+          steer_value = pid.NextSteeringValue();
           pid.Twiddle();
           
           
