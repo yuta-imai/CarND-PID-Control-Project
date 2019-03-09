@@ -78,9 +78,11 @@ As above, adding I coefficient did not significantly help, so adding twiddle did
 
 Recorded Youtube Video with the parameters above.
 
-[![thumbnail](https://img.youtube.com/vi/cPBM3a4MC4w/0.jpg)](https://youtu.be/cPBM3a4MC4w)
+[![Finalized](https://img.youtube.com/vi/cPBM3a4MC4w/0.jpg)](https://youtu.be/cPBM3a4MC4w)
 
+Also you can find video of optimizing proccess.
 
+[![in optimizing](https://img.youtube.com/vi/P8JKvKMExK8/0.jpg)](https://www.youtube.com/watch?v=P8JKvKMExK8)
 ---
 
 ## Dependencies
