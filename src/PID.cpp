@@ -56,13 +56,13 @@ double PID::NextSteeringValue() {
 	double steering_value =  - Kp * p_error 
 							- Kd * d_error
 							- Ki * i_error;
-
-	if (steering_value < -0.6) {
-		steering_value = -0.6;
+/*
+	if (steering_value < -1) {
+		steering_value = -1;
 	}
-	else if (steering_value > 0.6) {
-		steering_value = 0.6;
-	}
+	else if (steering_value > 1) {
+		steering_value = 1;
+	}*/
 
 	std::cout << "Total Error: " << TotalError() << std::endl;
 	std::cout << "P: " << Kp << ", I: " << Ki << ", D: " << Kd << std::endl;

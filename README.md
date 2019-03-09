@@ -5,16 +5,80 @@ Self-Driving Car Engineer Nanodegree Program
 
 ## Work summary
 
-I started by adding method `NextSteeringValue()` in PID.cpp, which provides steering value by PID control.
+I started by adding method `NextSteeringValue()` in PID.cpp, which provides steering value by PID control. Then I add Twiddling capability by adding `InitTwiddle()` and `Twiddle()` in `PID.cpp`.
 
-Then I add Twiddling capability by adding `InitTwiddle()` and `Twiddle()` in `PID.cpp`.
+On top of these, I tuned PID and twiddle parameters below, with fiding how each parameter works.
 
-While tries errors I added 
+### P controller
 
-- Guard for sudden direction change in `NextSteeringValue()` in `PID.cpp`
-- Initial PDI values as 0.139, 3.2, 0.00131 in `main.cpp`
+I tuned P only controller with throttle 0.2 because it easily goes off the track with much speed.The final parameter for P was finalized to 0.5.
 
-[Video link](https://youtu.be/B9HxQL_GzrA)
+While tries and erros are like below:
+
+- P: 0.1
+  - Easily went off the track by under steer in recovering to center.
+- P: 0.5
+  - Though sometimes went off the track, it ran 1 complete lap. It always overshoot the center line in recovering to center of the lane.
+- P: 1.0
+  - Same as 0.5 case. But it is bit more likely to went off by over steer. Espcecially onece it gets away from the center, the steering value becomes much hard so easiliy overshoot the center of the lane much.
+
+P only controller still works in slow speed though, it's not reasonalbe to use this as a controller. We need additional coefficients definitely.
+
+### PD controller
+
+The final parameter for PD was finalized to P: 0.5 and D: 9.2.
+
+Tries and errors are:
+
+- P: 0.5 and D: 1.2
+  - In throttle 0.2, it worked fine(make 1 complete lap) but with throttle 0.4, it did not.
+- P: 0.5 and D: 3.2
+  - It worked fine with throttle 0.4.
+- P: 0.5 and D: 9.2
+  - It worked fine with throttle 0.6. (Sometimes it fails though)
+  - Also worked fine with throttle 0.4. Too high D gain should prevents quick lane change, however in this situation we only have single lane so it did not matter.
+
+So far, we can say that PD pramaters are affect by speed of vehicle. At very high level, higer speed requires higher gains.
+
+**Twiddle**
+
+In throttle 0.6 situation, I tested twiddle as below
+
+- P: 0.5 and D: 9.2 with Twiddle every 300 frames
+- P: 0.5 and D: 9.2 with Twiddle every 50 frames
+- P: 0.5 and D: 9.2 with Twiddle every 10 frames
+
+Slightly it did better than no-twiddle case, because parameters could catch up speed that changes overtime. I assumed more frequent twiddle does betther for more quick catch up. However I could not find significant different.
+
+Anyway, adding D coefficinet significantly helps stabilizing the vehicle from overshooting again and again situation.
+
+### PID controller
+
+The final parameter is P:0.5, D:9.2 and I: 0.01. or 0.0. In this situation we don't have any wind, slippy road those prevent vehicle from goes straing with wheels. So when I applied rather large value like 0.1, the vehicle easily went off the track right after it started running.
+
+Still we can assume adding I coefficient help in case of wheels drifs with running in much speed. However I could not find significant different by adding I:0.01.
+
+**Twiddle**
+
+- P: 0.5, D: 9.2 and I: 0.01 with Twiddle every 50 frames
+
+As above, adding I coefficient did not significantly help, so adding twiddle did not bring big difference.
+
+### Final Parameter
+
+- P: 0.5
+- I: 0.01
+- D: 9.2
+- Twiddle
+  - Tolerance: 3.0e-8
+  - P: 0.05(1/10 of initial P)
+  - I: 0.001(1/10 of initial I)
+  - D: 0.092(1/10 of initial D)
+  - Interval: 50frames
+
+Recorded Youtube Video with the parameters above.
+
+[![thumbnail](https://img.youtube.com/vi/cPBM3a4MC4w/0.jpg)](https://youtu.be/cPBM3a4MC4w)
 
 
 ---
