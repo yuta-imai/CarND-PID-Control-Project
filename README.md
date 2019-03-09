@@ -80,7 +80,7 @@ Recorded Youtube Video with the parameters above.
 
 [![Finalized](https://img.youtube.com/vi/cPBM3a4MC4w/0.jpg)](https://youtu.be/cPBM3a4MC4w)
 
-Also you can find video of optimizing proccess.
+Also you can find video of optimizing proccess.(4x speed)
 
 [![in optimizing](https://img.youtube.com/vi/P8JKvKMExK8/0.jpg)](https://www.youtube.com/watch?v=P8JKvKMExK8)
 ---
